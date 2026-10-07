@@ -528,18 +528,36 @@ def process_job(job):
 
 # ---------------------------------------------------------------- main loop
 def main():
-    # DEBUG-ENTRY: main() ke shuru mein debug ntfy par bhejo (git push par inhisar nahi)
+    # DEBUG-ENTRY: debug file likho + git push karo (ntfy runner se nahi jata)
     try:
-        import urllib.request as _url
         _dbg0 = {"debug_entry": True,
                  "debug_cwd": os.getcwd(),
                  "debug_jobs_dir": (sorted(os.listdir("jobs"))
                                     if os.path.isdir("jobs") else "NO-JOBS-DIR"),
-                 "debug_manual_exists": os.path.exists("jobs/manual.json")}
-        _req = _url.Request("https://ntfy.sh/dsq_4f8a1c9e2b7d_debug",
-                            data=json.dumps(_dbg0).encode("utf-8"),
-                            headers={"Content-Type": "application/json"})
-        _url.urlopen(_req, timeout=20)
+                 "debug_manual_exists": os.path.exists("jobs/manual.json"),
+                 "debug_time": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+        with open("jobs/debug_last.json", "w", encoding="utf-8") as _f0:
+            json.dump(_dbg0, _f0, ensure_ascii=False, indent=1)
+        _r1 = subprocess.run(["git", "add", "jobs/debug_last.json"],
+                             capture_output=True, text=True)
+        _r2 = subprocess.run(["git", "-c", "user.name=dub-worker",
+                              "-c", "user.email=dub-worker@local",
+                              "commit", "-m", "[skip ci] debug last run"],
+                             capture_output=True, text=True)
+        _r3 = subprocess.run(["git", "push"], capture_output=True, text=True)
+        _dbg0["git_add_rc"] = _r1.returncode
+        _dbg0["git_commit_rc"] = _r2.returncode
+        _dbg0["git_commit_out"] = (_r2.stdout + _r2.stderr)[:200]
+        _dbg0["git_push_rc"] = _r3.returncode
+        _dbg0["git_push_out"] = (_r3.stdout + _r3.stderr)[:300]
+        with open("jobs/debug_last.json", "w", encoding="utf-8") as _f0:
+            json.dump(_dbg0, _f0, ensure_ascii=False, indent=1)
+        subprocess.run(["git", "add", "jobs/debug_last.json"], check=False)
+        subprocess.run(["git", "-c", "user.name=dub-worker",
+                        "-c", "user.email=dub-worker@local",
+                        "commit", "--amend", "-m", "[skip ci] debug last run"],
+                       check=False)
+        subprocess.run(["git", "push"], check=False)
     except Exception as _e0:
         pass
     ap = argparse.ArgumentParser(description="Dub Studio keyless worker (ntfy queue)")
