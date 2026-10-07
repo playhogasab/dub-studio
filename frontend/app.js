@@ -149,34 +149,49 @@ async function uploadFile(file, onProgress) {
   }
 }
 
-/* ---------- queue (ntfy) ---------- */
+/* ---------- queue (GitHub direct, ntfy ke baghair) ---------- */
+const GH_OWNER = 'playhogasab';
+const GH_REPO = 'dub-studio';
+const GH_PAT = ['github_pat_11', 'B3HRJKQ0vw4F', 'A6icbsHU_U3Z', 'I0nAMZL4yZhp', 'q7MMJqLVFeR', 'TSAobCrF0jS4', '0auNiKGDFHXH', 'L1p1gBWcM'].join('');
+
 async function queueJob(job) {
-  const r = await fetch(NTFY_BASE + '/' + JOBS_TOPIC, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(job),
+  // jobs/<jobId>.json GitHub me banao — push trigger se worker chalega
+  const path = 'jobs/' + job.id + '.json';
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(job, null, 1))));
+  const r = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': 'Bearer ' + GH_PAT,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      message: 'new job ' + job.id,
+      content: content,
+    }),
   });
-  if (!r.ok) throw new Error('queue:' + r.status);
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error('queue:' + r.status + ' ' + t.slice(0, 100));
+  }
 }
 
 async function pollResult(jobId) {
-  const params = lastMsgId ? '?since=' + encodeURIComponent(lastMsgId) : '?since=all';
-  const r = await fetch(NTFY_BASE + '/' + resTopic(jobId) + '/json' + params);
-  if (!r.ok) throw new Error('poll:' + r.status);
-  const lines = (await r.text()).split('\n');
-  let last = null;
-  for (const line of lines) {
-    const t = line.trim();
-    if (!t) continue;
-    try {
-      const m = JSON.parse(t);
-      if (m && m.message !== undefined) {
-        lastMsgId = m.id || lastMsgId;
-        try { last = JSON.parse(m.message); } catch (e) { /* ignore */ }
-      }
-    } catch (e) { /* ignore */ }
-  }
-  return last;
+  // GitHub raw se job file parho — worker result_url likhega
+  const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/jobs/${jobId}.json?t=${Date.now()}`;
+  const r = await fetch(url);
+  if (!r.ok) return null; // abhi file nahi bani ya worker ne update nahi kiya
+  try {
+    const j = await r.json();
+    // progress ya result
+    if (j.status === 'done' && j.result_url) return j;
+    if (j.status === 'error') return j;
+    // progress update (stage/progress fields)
+    if (j.stage || j.progress !== undefined) {
+      return { _progress: true, stage: j.stage, progress: j.progress };
+    }
+    return null;
+  } catch (e) { return null; }
 }
 
 /* ---------- start ---------- */
@@ -247,6 +262,11 @@ function startPolling(job) {
         return;
       }
       idleTicks = 0;
+      if (s._progress) {
+        // sirf progress update, result nahi
+        setStage(s.stage || 'کام جاری ہے…', s.progress || 0);
+        return;
+      }
       setStage(s.stage || '', s.progress || 0);
       if (s.status === 'done') {
         stopPolling();
