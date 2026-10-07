@@ -1,13 +1,9 @@
 {
- "file_url": "test://audio",
+ "file_url": "test://speech",
  "file_name": "test.mp3",
  "target_lang": "ur",
  "voice_gender": "aurat",
  "is_video": false,
- "processed": true,
- "note": "e2e test with generated audio",
- "id": "manual",
- "status": "error",
- "error": "آڈیو میں کوئی بولی نہیں ملی۔",
- "updated_at": "2026-10-07T10:29:06Z"
+ "processed": false,
+ "note": "e2e with real speech"
 }
