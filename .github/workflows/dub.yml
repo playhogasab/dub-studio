@@ -1,4 +1,6 @@
 name: Dub Worker
+permissions:
+  contents: write
 
 on:
   schedule:
@@ -56,5 +58,3 @@ jobs:
         run: pip install -r worker/requirements.txt
       - name: Run dub worker
         run: python worker/dub.py --max-jobs 5
-permissions:
-  contents: write
