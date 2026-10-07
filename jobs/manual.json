@@ -4,6 +4,14 @@
  "target_lang": "ur",
  "voice_gender": "aurat",
  "is_video": false,
- "processed": false,
- "note": "e2e final verify"
+ "processed": true,
+ "note": "e2e final verify",
+ "stage": "مکمل ہو گیا ✓",
+ "progress": 100,
+ "id": "manual",
+ "status": "done",
+ "result_url": "https://tmpfiles.org/wbA8lxD2PW4H/dubbed.mp3",
+ "duration": 6.62,
+ "detected_lang": "en",
+ "updated_at": "2026-10-07T11:34:46Z"
 }
