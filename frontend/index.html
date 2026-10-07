@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ڈب اسٹوڈیو — AI ڈبنگ</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg-glow"></div>
+<main class="card">
+  <header>
+    <div class="logo">🎙️</div>
+    <h1>ڈب اسٹوڈیو</h1>
+    <p class="sub">کسی بھی زبان کی آڈیو/ویڈیو — اردو اور مزید زبانوں میں ڈبنگ</p>
+  </header>
+
+  <!-- upload -->
+  <section id="uploadSection">
+    <div id="dropZone" class="drop-zone">
+      <div class="dz-icon">📁</div>
+      <p><b>فائل یہاں گرائیں</b> یا ٹیپ کر کے منتخب کریں</p>
+      <p class="hint">آڈیو: mp3, wav, m4a, ogg &nbsp;•&nbsp; ویڈیو: mp4, mov, mkv, webm<br>زیادہ سے زیادہ 5 منٹ</p>
+      <input type="file" id="fileInput" accept="audio/*,video/*" hidden>
+    </div>
+    <div id="fileInfo" class="file-info hidden">
+      <span id="fileName"></span>
+      <button id="changeFile" class="link-btn">تبدیل کریں</button>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="langSelect">ڈبنگ کی زبان</label>
+        <select id="langSelect"></select>
+      </div>
+      <div class="field">
+        <label>آواز</label>
+        <div class="gender-toggle">
+          <button id="btnAurat" class="gbtn active">👩 عورت</button>
+          <button id="btnMard" class="gbtn">👨 مرد</button>
+        </div>
+      </div>
+    </div>
+
+    <button id="startBtn" class="cta" disabled>✨ ڈبنگ شروع کرو</button>
+    <p class="note">اصل آواز کی جگہ نئی زبان کی آواز آئے گی — بیک گراؤنڈ میوزک ویسا ہی رہے گا، اور دورانیہ بھی وہی۔<br>مفت ورکر پر چلتا ہے، اس لیے 2 سے 5 منٹ کی فائل پر کچھ منٹ لگ سکتے ہیں۔</p>
+  </section>
+
+  <!-- progress -->
+  <section id="progressSection" class="hidden">
+    <div class="stage" id="stageLabel">تیار ہو رہا ہے…</div>
+    <div class="bar-wrap"><div class="bar" id="progressBar"></div></div>
+    <div class="pct" id="progressPct">0%</div>
+    <p class="hint">صفحہ بند نہ کریں — اس میں چند منٹ لگ سکتے ہیں۔</p>
+  </section>
+
+  <!-- result -->
+  <section id="resultSection" class="hidden">
+    <div class="done-badge">✅ ڈبنگ مکمل!</div>
+    <div id="previewWrap"></div>
+    <div class="row btns">
+      <a id="downloadBtn" class="cta" href="#" download>⬇️ ڈاؤن لوڈ</a>
+      <button id="newBtn" class="ghost">🔄 نئی فائل</button>
+    </div>
+  </section>
+
+  <div id="errorBox" class="error hidden"></div>
+</main>
+<footer>مفت AI ڈبنگ — Dub Studio</footer>
+<script src="app.js"></script>
+</body>
+</html>
