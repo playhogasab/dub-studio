@@ -626,18 +626,23 @@ def main():
             log("manual job mila — process ho raha hai …")
             try:
                 process_job(mdoc)
-                mdoc["processed"] = True
-                if not mdoc.get("status"):
-                    mdoc["status"] = "done"
             except Exception as e:
-                mdoc["processed"] = True
-                mdoc["status"] = "error"
-                mdoc["error"] = (str(e) or "نامعلوم خرابی")[:300]
-                log(f"manual job ERROR: {mdoc['error'][:200]}")
-            mdoc["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ",
-                                               time.gmtime())
+                update("manual", status="error",
+                       error=(str(e) or "نامعلوم خرابی")[:300])
+                log(f"manual job ERROR: {str(e)[:200]}")
+            # process_job ke update() calls file me likh chuke hain;
+            # ab sirf processed + timestamp lagao (overwrite nahi)
+            try:
+                final = json.load(open(mpath, encoding="utf-8"))
+            except Exception:
+                final = {}
+            final["processed"] = True
+            if not final.get("status"):
+                final["status"] = "done"
+            final["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                                                time.gmtime())
             with open(mpath, "w", encoding="utf-8") as f:
-                json.dump(mdoc, f, ensure_ascii=False, indent=1)
+                json.dump(final, f, ensure_ascii=False, indent=1)
             subprocess.run(["git", "add", mpath], check=False)
             subprocess.run(["git", "-c", "user.name=dub-worker",
                             "-c", "user.email=dub-worker@local",
