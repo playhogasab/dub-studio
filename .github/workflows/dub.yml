@@ -1,0 +1,58 @@
+name: Dub Worker
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  push:
+    paths:
+      - 'jobs/**'
+  workflow_dispatch:
+
+concurrency:
+  group: dub-worker
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      has_work: ${{ steps.q.outputs.has_work }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: q
+        run: python3 worker/check_queue.py
+
+  process:
+    needs: check
+    if: needs.check.outputs.has_work == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('worker/requirements.txt') }}
+          restore-keys: pip-
+      - name: Cache ML models
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/huggingface
+            ~/.cache/torch
+            ~/.cache/whisper
+          key: dub-models-v1
+          restore-keys: dub-models-
+      - name: Install torch (CPU)
+        run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Install worker deps
+        run: pip install -r worker/requirements.txt
+      - name: Run dub worker
+        run: python worker/dub.py --max-jobs 5
