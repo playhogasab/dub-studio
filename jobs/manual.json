@@ -4,6 +4,10 @@
  "target_lang": "ur",
  "voice_gender": "aurat",
  "is_video": false,
- "processed": false,
- "note": "e2e test 11:40 PKT"
+ "processed": true,
+ "note": "e2e test 11:40 PKT",
+ "id": "manual",
+ "status": "error",
+ "error": "Server disconnected without sending a response.",
+ "updated_at": "2026-10-07T09:56:26Z"
 }
