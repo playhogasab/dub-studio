@@ -1,4 +1,9 @@
 {
  "triggered_at": "2026-10-07T10:01:00Z",
- "note": "debug run 7 (step summary)"
+ "note": "debug run 7 (step summary)",
+ "status": "error",
+ "error": "فائل کا لنک خراب ہے۔ دوبارہ اپ لوڈ کریں۔",
+ "id": "trigger",
+ "processed": true,
+ "updated_at": "2026-10-07T12:55:13Z"
 }
