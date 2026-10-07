@@ -528,43 +528,20 @@ def process_job(job):
 
 # ---------------------------------------------------------------- main loop
 def main():
-    # DEBUG-ENTRY: GitHub API se debug file likho (git push/ntfy dono fail ho sakte hain)
+    # DEBUG-ENTRY: GitHub Step Summary mein likho (job page par nazar aayega)
     try:
-        import urllib.request as _url2, base64 as _b64
-        _dbg0 = {"debug_entry": True,
-                 "debug_cwd": os.getcwd(),
-                 "debug_jobs_dir": (sorted(os.listdir("jobs"))
-                                    if os.path.isdir("jobs") else "NO-JOBS-DIR"),
-                 "debug_manual_exists": os.path.exists("jobs/manual.json"),
-                 "debug_time": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
-        _tok = os.environ.get("GITHUB_TOKEN", "")
-        _dbg0["has_gh_token"] = bool(_tok)
-        if _tok:
-            _content = _b64.b64encode(json.dumps(_dbg0, ensure_ascii=False,
-                                                 indent=1).encode("utf-8")).decode()
-            # pehle maujooda sha lo (agar file hai)
-            _sha = None
-            try:
-                _gr = _url2.Request(
-                    "https://api.github.com/repos/playhogasab/dub-studio/contents/jobs/debug_last.json?ref=main",
-                    headers={"Authorization": f"Bearer {_tok}",
-                             "Accept": "application/vnd.github+json"})
-                _gd = json.load(_url2.urlopen(_gr, timeout=20))
-                _sha = _gd.get("sha")
-            except Exception:
-                pass
-            _body = {"message": "[skip ci] debug last run", "content": _content,
-                     "branch": "main"}
-            if _sha:
-                _body["sha"] = _sha
-            _pr = _url2.Request(
-                "https://api.github.com/repos/playhogasab/dub-studio/contents/jobs/debug_last.json",
-                data=json.dumps(_body).encode("utf-8"),
-                headers={"Authorization": f"Bearer {_tok}",
-                         "Accept": "application/vnd.github+json",
-                         "Content-Type": "application/json"})
-            _pd = json.load(_url2.urlopen(_pr, timeout=30))
-            _dbg0["api_push"] = "ok"
+        _dbg_lines = [
+            "## DUB-WORKER DEBUG",
+            f"- cwd: `{os.getcwd()}`",
+            f"- jobs dir: {sorted(os.listdir('jobs')) if os.path.isdir('jobs') else 'NO-JOBS-DIR'}",
+            f"- manual.json exists: {os.path.exists('jobs/manual.json')}",
+            f"- GITHUB_TOKEN set: {bool(os.environ.get('GITHUB_TOKEN'))}",
+            f"- time: {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}",
+        ]
+        _summ = os.environ.get("GITHUB_STEP_SUMMARY", "")
+        if _summ:
+            with open(_summ, "a", encoding="utf-8") as _sf:
+                _sf.write("\n".join(_dbg_lines) + "\n")
     except Exception as _e0:
         pass
     ap = argparse.ArgumentParser(description="Dub Studio keyless worker (ntfy queue)")
