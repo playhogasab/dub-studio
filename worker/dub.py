@@ -528,6 +528,20 @@ def process_job(job):
 
 # ---------------------------------------------------------------- main loop
 def main():
+    # DEBUG-ENTRY: main() ke shuru mein debug ntfy par bhejo (git push par inhisar nahi)
+    try:
+        import urllib.request as _url
+        _dbg0 = {"debug_entry": True,
+                 "debug_cwd": os.getcwd(),
+                 "debug_jobs_dir": (sorted(os.listdir("jobs"))
+                                    if os.path.isdir("jobs") else "NO-JOBS-DIR"),
+                 "debug_manual_exists": os.path.exists("jobs/manual.json")}
+        _req = _url.Request("https://ntfy.sh/dsq_4f8a1c9e2b7d_debug",
+                            data=json.dumps(_dbg0).encode("utf-8"),
+                            headers={"Content-Type": "application/json"})
+        _url.urlopen(_req, timeout=20)
+    except Exception as _e0:
+        pass
     ap = argparse.ArgumentParser(description="Dub Studio keyless worker (ntfy queue)")
     ap.add_argument("--ntfy-topic", default=None,
                     help="ntfy topic base (default: dub.py me hardcoded NTFY_TOPIC)")
