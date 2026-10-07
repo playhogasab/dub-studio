@@ -210,6 +210,29 @@ def probe_duration(path):
     return float(p.stdout.decode().strip())
 
 
+def _generate_test_audio(dst, dur=5.0):
+    """Test ke liye synthetic audio (speech-like + 330Hz bg)."""
+    import numpy as np
+    import wave
+    sr = 22050
+    t = np.arange(int(sr * dur)) / sr
+    bg = 0.15 * np.sin(2 * np.pi * 330 * t)
+    fm = np.sin(2 * np.pi * 150 * t + 3 * np.sin(2 * np.pi * 5 * t))
+    am = 0.5 + 0.5 * np.sin(2 * np.pi * 3 * t)
+    audio = (bg + 0.4 * fm * am)
+    audio = audio / np.max(np.abs(audio)) * 0.8
+    audio_int16 = (audio * 32767).astype(np.int16)
+    wav_path = dst + ".wav"
+    with wave.open(wav_path, 'w') as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(sr)
+        w.writeframes(audio_int16.tobytes())
+    run(["ffmpeg", "-y", "-v", "error", "-i", wav_path,
+         "-codec:a", "libmp3lame", "-b:a", "64k", dst])
+    os.remove(wav_path)
+
+
 def download_file(url, dst, tries=3):
     last_err = None
     for attempt in range(1, tries + 1):
@@ -451,17 +474,21 @@ def process_job(job):
         raise RuntimeError("زبان منتخب کریں۔")
     if voice_gender not in ("mard", "aurat"):
         voice_gender = "aurat"
-    if not file_url.startswith("https://"):
+    is_test = file_url.startswith("test://")
+    if not is_test and not file_url.startswith("https://"):
         raise RuntimeError("فائل کا لنک خراب ہے۔ دوبارہ اپ لوڈ کریں۔")
 
-    # 1. download
+    # 1. download (ya test audio generate karo)
     update(job_id, stage=STAGES["prepare"], progress=5)
     log(f"job {job_id}: download {file_url[:60]}…")
     ext = (job.get("file_name") or "").rsplit(".", 1)[-1].lower()
     if ext not in AUDIO_EXTS and ext not in VIDEO_EXTS:
         ext = "mp4" if is_video else "mp3"
     src_path = os.path.join(d, f"input.{ext}")
-    download_file(file_url, src_path)
+    if is_test:
+        _generate_test_audio(src_path)
+    else:
+        download_file(file_url, src_path)
     dur_in = probe_duration(src_path)
     if dur_in > MAX_SECONDS:
         raise RuntimeError("فائل 5 منٹ سے لمبی ہے۔ چھوٹی فائل اپ لوڈ کریں۔")
