@@ -56,15 +56,17 @@ def main():
             print(f"queued/processing job: {jid} (last={st})")
             break
 
-    mp = "jobs/manual.json"
-    if os.path.exists(mp):
+    # jobs/*.json (GitHub-direct frontend jobs)
+    import glob
+    for mp in sorted(glob.glob("jobs/*.json")):
         try:
             d = json.load(open(mp, encoding="utf-8"))
             if d and not d.get("processed"):
                 has_work = True
-                print("manual.json unprocessed")
+                print(f"{mp} unprocessed")
+                break
         except Exception as e:
-            print(f"manual.json read fail: {e}")
+            print(f"{mp} read fail: {e}")
 
     line = f"has_work={'true' if has_work else 'false'}"
     gh_out = os.environ.get("GITHUB_OUTPUT")
