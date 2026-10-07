@@ -488,17 +488,45 @@ def update(job_id, **fields):
     store_update_job(job_id, fields)
 
 
+def detect_gender(audio_path):
+    """Audio se mard/aurat auto-detect (pitch/F0 analysis).
+    Returns: 'mard' ya 'aurat'. Fail hone par 'aurat' (default)."""
+    try:
+        import librosa
+        import numpy as np
+        # 30 sec tak ka sample lo (speed ke liye)
+        y, sr = librosa.load(audio_path, sr=16000, duration=30.0, mono=True)
+        if len(y) < sr * 2:
+            return "aurat"
+        # Pitch (F0) nikalo
+        f0, voiced_flag, _ = librosa.pyin(
+            y, fmin=librosa.note_to_hz('C2'), fmax=librosa.note_to_hz('C7'),
+            sr=sr, frame_length=2048, hop_length=512)
+        # Sirf voiced frames
+        voiced_f0 = f0[voiced_flag & ~np.isnan(f0)]
+        if len(voiced_f0) < 10:
+            return "aurat"
+        median_f0 = float(np.median(voiced_f0))
+        # Mard: ~85-180 Hz, Aurat: ~165-255 Hz. Threshold 160 Hz.
+        gender = "mard" if median_f0 < 160 else "aurat"
+        log(f"gender detect: median F0={median_f0:.1f} Hz -> {gender}")
+        return gender
+    except Exception as e:
+        log(f"gender detect fail: {e} — default aurat")
+        return "aurat"
+
+
 def process_job(job):
     job_id = job["id"]
     d = job_dir(job_id)
     target_lang = job.get("target_lang", "ur")
-    voice_gender = job.get("voice_gender", "aurat")
+    voice_gender = job.get("voice_gender", "auto")
     is_video = bool(job.get("is_video"))
     file_url = job.get("file_url", "")
     if target_lang not in VOICES:
         raise RuntimeError("زبان منتخب کریں۔")
-    if voice_gender not in ("mard", "aurat"):
-        voice_gender = "aurat"
+    if voice_gender not in ("mard", "aurat", "auto"):
+        voice_gender = "auto"
     is_test = file_url.startswith("test://")
     if not is_test and not file_url.startswith("https://"):
         raise RuntimeError("فائل کا لنک خراب ہے۔ دوبارہ اپ لوڈ کریں۔")
@@ -517,6 +545,12 @@ def process_job(job):
     dur_in = probe_duration(src_path)
     if dur_in > MAX_SECONDS:
         raise RuntimeError("فائل 5 منٹ سے لمبی ہے۔ چھوٹی فائل اپ لوڈ کریں۔")
+
+    # 1b. gender auto-detect (agar "auto" hai)
+    if voice_gender == "auto":
+        update(job_id, stage="آواز پہچانی جا رہی ہے…", progress=7)
+        voice_gender = detect_gender(src_path)
+        log(f"job {job_id}: auto gender -> {voice_gender}")
 
     # 2. extract full-quality wav
     full_wav = os.path.join(d, "full.wav")
