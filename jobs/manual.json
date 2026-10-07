@@ -1,13 +1,9 @@
 {
- "file_url": "https://files.catbox.moe/jwnujn.mp3",
- "file_name": "test_input.mp3",
+ "file_url": "https://raw.githubusercontent.com/playhogasab/dub-studio/main/test_audio.mp3",
+ "file_name": "test_audio.mp3",
  "target_lang": "ur",
  "voice_gender": "aurat",
  "is_video": false,
- "processed": true,
- "note": "e2e test retry with download fix",
- "id": "manual",
- "status": "error",
- "error": "ڈاؤن لوڈ 3 koshishon me na ho saka: Server disconnected without sending a response.",
- "updated_at": "2026-10-07T10:09:19Z"
+ "processed": false,
+ "note": "e2e test via github raw"
 }
