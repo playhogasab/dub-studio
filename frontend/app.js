@@ -30,7 +30,7 @@ const dropZone = $('dropZone'), fileInput = $('fileInput'),
 
 let selectedFile = null;
 let selectedIsVideo = false;
-let gender = 'aurat';
+let gender = 'auto'; // auto-detect: worker pitch se mard/aurat pehchanega
 let pollTimer = null;
 let lastMsgId = null;
 
@@ -95,14 +95,8 @@ function setFile(f, isVideo) {
   startBtn.disabled = false;
 }
 
-/* ---------- gender ---------- */
-$('btnAurat').addEventListener('click', () => setGender('aurat'));
-$('btnMard').addEventListener('click', () => setGender('mard'));
-function setGender(g) {
-  gender = g;
-  $('btnAurat').classList.toggle('active', g === 'aurat');
-  $('btnMard').classList.toggle('active', g === 'mard');
-}
+/* ---------- gender: auto-detect (worker pitch se pehchanega) ---------- */
+// Manual buttons hata diye — gender = 'auto' fixed hai.
 
 /* ---------- upload with fallbacks ---------- */
 function uploadCatboxXHR(file, onProgress) {
