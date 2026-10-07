@@ -6,5 +6,11 @@
  "target_lang": "en",
  "voice_gender": "mard",
  "created_at": "2026-10-07T12:24:21.425Z",
- "_retrigger": "2026-10-07T12:52:40Z"
+ "_retrigger": "2026-10-07T12:52:40Z",
+ "stage": "فائل تیار کی جا رہی ہے…",
+ "progress": 5,
+ "status": "error",
+ "error": "فائل پڑھی نہیں جا سکی۔ آڈیو/ویڈیو فائل اپ لوڈ کریں۔",
+ "processed": true,
+ "updated_at": "2026-10-07T12:55:12Z"
 }
