@@ -4,6 +4,10 @@
  "target_lang": "ur",
  "voice_gender": "aurat",
  "is_video": false,
- "processed": false,
- "note": "e2e test retry with download fix"
+ "processed": true,
+ "note": "e2e test retry with download fix",
+ "id": "manual",
+ "status": "error",
+ "error": "ڈاؤن لوڈ 3 koshishon me na ho saka: Server disconnected without sending a response.",
+ "updated_at": "2026-10-07T10:09:19Z"
 }
