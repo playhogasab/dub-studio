@@ -210,19 +210,33 @@ def probe_duration(path):
     return float(p.stdout.decode().strip())
 
 
-def download_file(url, dst):
-    with httpx.Client(timeout=600, follow_redirects=True) as c:
-        with c.stream("GET", url) as r:
-            r.raise_for_status()
-            total = 0
-            with open(dst, "wb") as f:
-                for chunk in r.iter_bytes(1024 * 256):
-                    f.write(chunk)
-                    total += len(chunk)
-                    if total > MAX_BYTES + 1024:
-                        raise RuntimeError("فائل 100MB سے بڑی ہے۔")
-    if os.path.getsize(dst) == 0:
-        raise RuntimeError("ڈاؤن لوڈ خالی آیا۔ دوبارہ کوشش کریں۔")
+def download_file(url, dst, tries=3):
+    last_err = None
+    for attempt in range(1, tries + 1):
+        try:
+            with httpx.Client(timeout=600, follow_redirects=True) as c:
+                with c.stream("GET", url) as r:
+                    r.raise_for_status()
+                    total = 0
+                    with open(dst, "wb") as f:
+                        for chunk in r.iter_bytes(1024 * 256):
+                            f.write(chunk)
+                            total += len(chunk)
+                            if total > MAX_BYTES + 1024:
+                                raise RuntimeError("فائل 100MB سے بڑی ہے۔")
+            if os.path.getsize(dst) == 0:
+                raise RuntimeError("ڈاؤن لوڈ خالی آیا۔ دوبارہ کوشش کریں۔")
+            return
+        except Exception as e:
+            last_err = e
+            log(f"download koshish {attempt}/{tries} fail: {str(e)[:120]}")
+            if os.path.exists(dst):
+                try:
+                    os.remove(dst)
+                except Exception:
+                    pass
+            time.sleep(5 * attempt)
+    raise RuntimeError(f"ڈاؤن لوڈ {tries} koshishon me na ho saka: {str(last_err)[:200]}")
 
 
 def upload_file(path):
@@ -528,22 +542,6 @@ def process_job(job):
 
 # ---------------------------------------------------------------- main loop
 def main():
-    # DEBUG-ENTRY: GitHub Step Summary mein likho (job page par nazar aayega)
-    try:
-        _dbg_lines = [
-            "## DUB-WORKER DEBUG",
-            f"- cwd: `{os.getcwd()}`",
-            f"- jobs dir: {sorted(os.listdir('jobs')) if os.path.isdir('jobs') else 'NO-JOBS-DIR'}",
-            f"- manual.json exists: {os.path.exists('jobs/manual.json')}",
-            f"- GITHUB_TOKEN set: {bool(os.environ.get('GITHUB_TOKEN'))}",
-            f"- time: {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}",
-        ]
-        _summ = os.environ.get("GITHUB_STEP_SUMMARY", "")
-        if _summ:
-            with open(_summ, "a", encoding="utf-8") as _sf:
-                _sf.write("\n".join(_dbg_lines) + "\n")
-    except Exception as _e0:
-        pass
     ap = argparse.ArgumentParser(description="Dub Studio keyless worker (ntfy queue)")
     ap.add_argument("--ntfy-topic", default=None,
                     help="ntfy topic base (default: dub.py me hardcoded NTFY_TOPIC)")
@@ -573,13 +571,6 @@ def main():
         if mdoc and not mdoc.get("processed"):
             mdoc["id"] = "manual"
             _MANUAL["manual"] = mpath
-            # DEBUG: runner ka haal manual.json me likho (logs nahi parh sakte)
-            try:
-                _ls = sorted(os.listdir("jobs")) if os.path.isdir("jobs") else "NO-JOBS-DIR"
-            except Exception as _e:
-                _ls = f"ls-fail:{_e}"
-            update("manual", debug_cwd=os.getcwd(), debug_jobs_ls=_ls,
-                   debug_note="manual block entered")
             log("manual job mila — process ho raha hai …")
             try:
                 process_job(mdoc)
