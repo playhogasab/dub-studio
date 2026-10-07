@@ -1,0 +1,89 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0d0f1a; --card: #161a2b; --line: #262c47;
+  --txt: #eef0ff; --muted: #9aa1c7;
+  --acc1: #7c5cff; --acc2: #00d4b8;
+}
+body {
+  font-family: "Segoe UI", "Noto Nastaliq Urdu", Tahoma, sans-serif;
+  background: var(--bg); color: var(--txt);
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+  padding: 24px 14px;
+}
+.bg-glow {
+  position: fixed; inset: 0; z-index: -1;
+  background:
+    radial-gradient(600px 300px at 80% 10%, rgba(124,92,255,.18), transparent),
+    radial-gradient(500px 260px at 15% 85%, rgba(0,212,184,.12), transparent);
+}
+.card {
+  width: 100%; max-width: 520px; background: var(--card);
+  border: 1px solid var(--line); border-radius: 22px;
+  padding: 28px 22px; box-shadow: 0 20px 60px rgba(0,0,0,.45);
+}
+header { text-align: center; margin-bottom: 20px; }
+.logo { font-size: 46px; }
+h1 { font-size: 30px; margin: 6px 0 4px; }
+.sub { color: var(--muted); font-size: 14px; }
+
+.drop-zone {
+  border: 2px dashed var(--line); border-radius: 16px;
+  padding: 30px 16px; text-align: center; cursor: pointer;
+  transition: .2s; background: rgba(124,92,255,.04);
+}
+.drop-zone:hover, .drop-zone.over { border-color: var(--acc1); background: rgba(124,92,255,.1); }
+.dz-icon { font-size: 38px; margin-bottom: 8px; }
+.hint { color: var(--muted); font-size: 12.5px; margin-top: 8px; line-height: 1.9; }
+.file-info {
+  display: flex; justify-content: space-between; align-items: center;
+  background: rgba(0,212,184,.08); border: 1px solid var(--line);
+  border-radius: 12px; padding: 10px 14px; margin-top: 12px; font-size: 14px;
+}
+.link-btn { background: none; border: none; color: var(--acc2); cursor: pointer; font-size: 13px; }
+
+.row { display: flex; gap: 12px; margin-top: 16px; }
+.field { flex: 1; }
+.field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+select {
+  width: 100%; padding: 12px; border-radius: 12px; font-size: 15px;
+  background: #0f1322; color: var(--txt); border: 1px solid var(--line);
+}
+.gender-toggle { display: flex; gap: 8px; }
+.gbtn {
+  flex: 1; padding: 12px; border-radius: 12px; font-size: 15px; cursor: pointer;
+  background: #0f1322; color: var(--txt); border: 1px solid var(--line);
+}
+.gbtn.active { border-color: var(--acc1); background: rgba(124,92,255,.18); }
+
+.cta {
+  display: block; width: 100%; margin-top: 18px; padding: 15px;
+  font-size: 17px; font-weight: bold; text-align: center; text-decoration: none;
+  color: #fff; border: none; border-radius: 14px; cursor: pointer;
+  background: linear-gradient(135deg, var(--acc1), var(--acc2));
+}
+.cta:disabled { opacity: .4; cursor: not-allowed; }
+.ghost {
+  padding: 14px 18px; border-radius: 14px; font-size: 15px; cursor: pointer;
+  background: transparent; color: var(--txt); border: 1px solid var(--line);
+}
+.note { color: var(--muted); font-size: 12.5px; margin-top: 12px; line-height: 1.9; text-align: center; }
+
+.stage { font-size: 16px; text-align: center; margin: 10px 0 14px; min-height: 28px; }
+.bar-wrap { background: #0f1322; border-radius: 99px; height: 14px; overflow: hidden; border: 1px solid var(--line); }
+.bar { height: 100%; width: 0%; border-radius: 99px;
+  background: linear-gradient(90deg, var(--acc1), var(--acc2)); transition: width .4s; }
+.pct { text-align: center; color: var(--muted); margin-top: 8px; font-size: 14px; }
+
+.done-badge { text-align: center; font-size: 19px; font-weight: bold; margin-bottom: 14px; }
+#previewWrap video, #previewWrap audio { width: 100%; border-radius: 12px; margin-bottom: 6px; }
+.btns { align-items: stretch; }
+.btns .cta { margin-top: 0; }
+
+.error {
+  margin-top: 16px; background: rgba(255,80,80,.1);
+  border: 1px solid rgba(255,80,80,.4); color: #ffb3b3;
+  padding: 12px 14px; border-radius: 12px; font-size: 14px; line-height: 1.8;
+}
+.hidden { display: none !important; }
+footer { color: var(--muted); font-size: 12px; margin-top: 18px; }
+@media (max-width: 480px) { .row { flex-direction: column; } }
