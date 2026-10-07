@@ -528,36 +528,43 @@ def process_job(job):
 
 # ---------------------------------------------------------------- main loop
 def main():
-    # DEBUG-ENTRY: debug file likho + git push karo (ntfy runner se nahi jata)
+    # DEBUG-ENTRY: GitHub API se debug file likho (git push/ntfy dono fail ho sakte hain)
     try:
+        import urllib.request as _url2, base64 as _b64
         _dbg0 = {"debug_entry": True,
                  "debug_cwd": os.getcwd(),
                  "debug_jobs_dir": (sorted(os.listdir("jobs"))
                                     if os.path.isdir("jobs") else "NO-JOBS-DIR"),
                  "debug_manual_exists": os.path.exists("jobs/manual.json"),
                  "debug_time": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
-        with open("jobs/debug_last.json", "w", encoding="utf-8") as _f0:
-            json.dump(_dbg0, _f0, ensure_ascii=False, indent=1)
-        _r1 = subprocess.run(["git", "add", "jobs/debug_last.json"],
-                             capture_output=True, text=True)
-        _r2 = subprocess.run(["git", "-c", "user.name=dub-worker",
-                              "-c", "user.email=dub-worker@local",
-                              "commit", "-m", "[skip ci] debug last run"],
-                             capture_output=True, text=True)
-        _r3 = subprocess.run(["git", "push"], capture_output=True, text=True)
-        _dbg0["git_add_rc"] = _r1.returncode
-        _dbg0["git_commit_rc"] = _r2.returncode
-        _dbg0["git_commit_out"] = (_r2.stdout + _r2.stderr)[:200]
-        _dbg0["git_push_rc"] = _r3.returncode
-        _dbg0["git_push_out"] = (_r3.stdout + _r3.stderr)[:300]
-        with open("jobs/debug_last.json", "w", encoding="utf-8") as _f0:
-            json.dump(_dbg0, _f0, ensure_ascii=False, indent=1)
-        subprocess.run(["git", "add", "jobs/debug_last.json"], check=False)
-        subprocess.run(["git", "-c", "user.name=dub-worker",
-                        "-c", "user.email=dub-worker@local",
-                        "commit", "--amend", "-m", "[skip ci] debug last run"],
-                       check=False)
-        subprocess.run(["git", "push"], check=False)
+        _tok = os.environ.get("GITHUB_TOKEN", "")
+        _dbg0["has_gh_token"] = bool(_tok)
+        if _tok:
+            _content = _b64.b64encode(json.dumps(_dbg0, ensure_ascii=False,
+                                                 indent=1).encode("utf-8")).decode()
+            # pehle maujooda sha lo (agar file hai)
+            _sha = None
+            try:
+                _gr = _url2.Request(
+                    "https://api.github.com/repos/playhogasab/dub-studio/contents/jobs/debug_last.json?ref=main",
+                    headers={"Authorization": f"Bearer {_tok}",
+                             "Accept": "application/vnd.github+json"})
+                _gd = json.load(_url2.urlopen(_gr, timeout=20))
+                _sha = _gd.get("sha")
+            except Exception:
+                pass
+            _body = {"message": "[skip ci] debug last run", "content": _content,
+                     "branch": "main"}
+            if _sha:
+                _body["sha"] = _sha
+            _pr = _url2.Request(
+                "https://api.github.com/repos/playhogasab/dub-studio/contents/jobs/debug_last.json",
+                data=json.dumps(_body).encode("utf-8"),
+                headers={"Authorization": f"Bearer {_tok}",
+                         "Accept": "application/vnd.github+json",
+                         "Content-Type": "application/json"})
+            _pd = json.load(_url2.urlopen(_pr, timeout=30))
+            _dbg0["api_push"] = "ok"
     except Exception as _e0:
         pass
     ap = argparse.ArgumentParser(description="Dub Studio keyless worker (ntfy queue)")
