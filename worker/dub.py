@@ -210,10 +210,35 @@ def probe_duration(path):
     return float(p.stdout.decode().strip())
 
 
-def _generate_test_audio(dst, dur=5.0):
-    """Test ke liye synthetic audio (speech-like + 330Hz bg)."""
-    import numpy as np
+def _generate_test_audio(dst, dur=5.0, real_speech=False):
+    """Test ke liye audio. real_speech=True to Edge-TTS se asal boli."""
     import wave
+    if real_speech:
+        # Edge-TTS se asal English speech
+        import asyncio
+        try:
+            import edge_tts
+        except ImportError:
+            raise RuntimeError("edge-tts installed nahi.")
+        text = "Hello, this is a test of the dubbing system. We are converting English speech to Urdu."
+        async def _gen():
+            comm = edge_tts.Communicate(text, "en-US-AriaNeural")
+            await comm.save(dst)
+        asyncio.run(_gen())
+        # 330Hz background tone mix karo
+        bg_wav = dst + ".bg.wav"
+        run(["ffmpeg", "-y", "-v", "error", "-f", "lavfi",
+             "-i", f"sine=frequency=330:duration={dur}",
+             "-ar", "44100", "-ac", "2", bg_wav])
+        mixed = dst + ".mixed.mp3"
+        run(["ffmpeg", "-y", "-v", "error", "-i", dst, "-i", bg_wav,
+             "-filter_complex", "[0:a][1:a]amix=inputs=2:duration=first:weights=10 1[a]",
+             "-map", "[a]", "-b:a", "128k", mixed])
+        os.replace(mixed, dst)
+        os.remove(bg_wav)
+        return
+    # Synthetic (speech-like + 330Hz bg)
+    import numpy as np
     sr = 22050
     t = np.arange(int(sr * dur)) / sr
     bg = 0.15 * np.sin(2 * np.pi * 330 * t)
@@ -486,7 +511,7 @@ def process_job(job):
         ext = "mp4" if is_video else "mp3"
     src_path = os.path.join(d, f"input.{ext}")
     if is_test:
-        _generate_test_audio(src_path)
+        _generate_test_audio(src_path, real_speech=(file_url == "test://speech"))
     else:
         download_file(file_url, src_path)
     dur_in = probe_duration(src_path)
