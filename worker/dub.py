@@ -557,6 +557,13 @@ def main():
         if mdoc and not mdoc.get("processed"):
             mdoc["id"] = "manual"
             _MANUAL["manual"] = mpath
+            # DEBUG: runner ka haal manual.json me likho (logs nahi parh sakte)
+            try:
+                _ls = sorted(os.listdir("jobs")) if os.path.isdir("jobs") else "NO-JOBS-DIR"
+            except Exception as _e:
+                _ls = f"ls-fail:{_e}"
+            update("manual", debug_cwd=os.getcwd(), debug_jobs_ls=_ls,
+                   debug_note="manual block entered")
             log("manual job mila — process ho raha hai …")
             try:
                 process_job(mdoc)
