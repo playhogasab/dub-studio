@@ -612,44 +612,47 @@ def main():
         jobs = []
     log(f"jobs mile: {len(jobs)}")
 
-    # manual job (testing / ntfy fallback): jobs/manual.json
-    mpath = "jobs/manual.json"
-    if os.path.exists(mpath):
+    # file-based jobs: jobs/*.json (frontend se direct, ntfy ke baghair)
+    # har file: {file_url, target_lang, voice_gender, ...}
+    import glob
+    for mpath in sorted(glob.glob("jobs/*.json")):
         try:
             mdoc = json.load(open(mpath, encoding="utf-8"))
         except Exception as ex:
-            log(f"manual.json parhna fail: {ex}")
-            mdoc = {}
-        if mdoc and not mdoc.get("processed"):
-            mdoc["id"] = "manual"
-            _MANUAL["manual"] = mpath
-            log("manual job mila — process ho raha hai …")
-            try:
-                process_job(mdoc)
-            except Exception as e:
-                update("manual", status="error",
-                       error=(str(e) or "نامعلوم خرابی")[:300])
-                log(f"manual job ERROR: {str(e)[:200]}")
-            # process_job ke update() calls file me likh chuke hain;
-            # ab sirf processed + timestamp lagao (overwrite nahi)
-            try:
-                final = json.load(open(mpath, encoding="utf-8"))
-            except Exception:
-                final = {}
-            final["processed"] = True
-            if not final.get("status"):
-                final["status"] = "done"
-            final["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ",
-                                                time.gmtime())
-            with open(mpath, "w", encoding="utf-8") as f:
-                json.dump(final, f, ensure_ascii=False, indent=1)
-            subprocess.run(["git", "add", mpath], check=False)
-            subprocess.run(["git", "-c", "user.name=dub-worker",
-                            "-c", "user.email=dub-worker@local",
-                            "commit", "-m", "[skip ci] manual job result"],
-                           check=False)
-            subprocess.run(["git", "push"], check=False)
-            log("manual.json result commit ho gaya.")
+            log(f"{mpath} parhna fail: {ex}")
+            continue
+        if not mdoc or mdoc.get("processed"):
+            continue
+        job_id = os.path.splitext(os.path.basename(mpath))[0]
+        mdoc["id"] = job_id
+        _MANUAL[job_id] = mpath
+        log(f"file job mila ({job_id}) — process ho raha hai …")
+        try:
+            process_job(mdoc)
+        except Exception as e:
+            update(job_id, status="error",
+                   error=(str(e) or "نامعلوم خرابی")[:300])
+            log(f"file job ERROR ({job_id}): {str(e)[:200]}")
+        # process_job ke update() calls file me likh chuke hain;
+        # ab sirf processed + timestamp lagao (overwrite nahi)
+        try:
+            final = json.load(open(mpath, encoding="utf-8"))
+        except Exception:
+            final = {}
+        final["processed"] = True
+        if not final.get("status"):
+            final["status"] = "done"
+        final["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                                            time.gmtime())
+        with open(mpath, "w", encoding="utf-8") as f:
+            json.dump(final, f, ensure_ascii=False, indent=1)
+        subprocess.run(["git", "add", mpath], check=False)
+        subprocess.run(["git", "-c", "user.name=dub-worker",
+                        "-c", "user.email=dub-worker@local",
+                        "commit", "-m", f"[skip ci] job {job_id} result"],
+                       check=False)
+        subprocess.run(["git", "push"], check=False)
+        log(f"{job_id} result commit ho gaya.")
 
     done_n = 0
     for job in jobs[:args.max_jobs]:
