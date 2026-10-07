@@ -133,7 +133,7 @@ async function uploadFallback(file, url, field) {
   if (url.includes('tmpfiles')) {
     const j = JSON.parse(t);
     const u = j.data && j.data.url; // https://tmpfiles.org/<id>/<name>
-    const m = u && u.match(/https:\/\/tmpfiles\.org\/(\d+)\/(.*)/);
+    const m = u && u.match(/https:\/\/tmpfiles\.org\/([A-Za-z0-9]+)\/(.*)/);
     if (m) return 'https://tmpfiles.org/dl/' + m[1] + '/' + m[2];
     throw new Error('tmpfiles:bad-response');
   }
@@ -144,10 +144,8 @@ async function uploadFallback(file, url, field) {
 async function uploadFile(file, onProgress) {
   try { return await uploadCatboxXHR(file, onProgress); }
   catch (e1) {
-    try { return await uploadFallback(file, 'https://0x0.st', 'file'); }
-    catch (e2) {
-      return await uploadFallback(file, 'https://tmpfiles.org/api/v1/upload', 'file');
-    }
+    // 0x0.st uploads disabled — seedha tmpfiles.org
+    return await uploadFallback(file, 'https://tmpfiles.org/api/v1/upload', 'file');
   }
 }
 
